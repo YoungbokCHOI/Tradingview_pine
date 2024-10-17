@@ -1,0 +1,778 @@
+// © hacwatch
+// version : 0.931 (2024.10.21 11:20)
+//1.3xSuperTrend :  https://youtu.be/HpNZ2VpZzSE?si=h2Y_hf4XBWE4fC3T, https://youtu.be/298smPYwVFM?//si=xnlNq7VyUrZ_Qiim
+//2.EMA200 : https://youtu.be/HpNZ2VpZzSE?si=h2Y_hf4XBWE4fC3T, https://youtu.be/298smPYwVFM?//si=xnlNq7VyUrZ_Qiim
+//3.Donchian Trend
+//4.Ichimoku Cloud : https://youtu.be/qx4Rq7N8bwk?si=vsApO_9xFBTdM3Vv
+//5.NSDT HAMA : https://youtu.be/IlaaDtl4wdk?si=jcjq9nE5_jIGRj_T
+//6.Echo Forecast : https://youtu.be/qSQtUcdRGZk?si=xXnrtai_xyBOYrb0
+//7.SSL Hybrid : https://youtu.be/d2WPhrRuXMg?si=0nm8kgFipufjYCwF
+//8.Support and Resistance Levels with Breaks : https://youtu.be/lNq8MCXlmCs?si=Xjqy7gWwmmbC4vy1
+//
+//@version=5
+indicator('3xSuperTrend+SSL Hybrid+Forecast ETC', overlay=true, format=format.price, precision=2, shorttitle='3xSuperTrend+Echo, SSL ETC')
+
+// INPUT Donchian
+isVisibleDonchian = input.bool(false, title="Visible Donchian Trend",  group='Indicators: Donchian Trend')
+dlen = input.int(defval=200, title='Donchian Channel Period', minval=10, group='Indicators: Donchian Trend')
+lwidth = input.int(defval=1, title='Line Width', minval=1, maxval=4, group='Indicators: Donchian Trend')
+
+// INPUT EMA
+isVisibleEMA = input.bool(true, title="Visible EMA",  group='Indicators: EMA')
+i_verylongslowEMA = input(200, title='Very Slow EMA', group='Indicators: EMA')
+srce = input(close, title='Source', group='Indicators: EMA')
+
+// INPUT Triple Supertrend
+isVisibleSuperT = input.bool(true, title="Visible Triple Supertrend",  group='Indicators: Triple Supertrend')
+//
+Periods = input(title='SuperTrend ATR Period 1', defval=10,  group='Indicators: Triple Supertrend')
+src = input(close, title='SuperTrend Source 1',  group='Indicators: Triple Supertrend')
+Multiplier = input.float(title='SuperTrend ATR Multiplier 1', step=0.1, defval=1.0,  group='Indicators: Triple Supertrend')
+
+Periods2 = input(title='Triple Supertrend ATR Period 2', defval=11,  group='Indicators: Triple Supertrend')
+src2 = input(close, title='Triple Supertrend Source 2',  group='Indicators: Triple Supertrend')
+Multiplier2 = input.float(title='Triple Supertrend ATR Multiplier 2', step=0.1, defval=2.0,  group='Indicators: Triple Supertrend')
+
+Periods3 = input(title='Triple Supertrend ATR Period 3', defval=12,  group='Indicators: Triple Supertrend')
+src3 = input(close, title='Triple Supertrend Source 3',  group='Indicators: Triple Supertrend')
+Multiplier3 = input.float(title='Triple Supertrend ATR Multiplier 3', step=0.1, defval=3.0,  group='Indicators: Triple Supertrend')
+
+
+//////////////////////////////////////////////////////////////////////////////////////
+// LOGIC Donchian
+//////////////////////////////////////////////////////////////////////////////////////
+//LOGIC EMA
+v_verylongslowEMA = ta.ema(srce, i_verylongslowEMA)
+// display EMA
+if (not isVisibleEMA)
+    v_verylongslowEMA := na
+plot(v_verylongslowEMA , title='Very Slow EMA', color=color.white, linewidth=3)
+
+
+//////////////////////////////////////////////////////////////////////////////////////
+// LOGIC Donchian
+//////////////////////////////////////////////////////////////////////////////////////
+
+/////////////////////////////////////////////
+//function Donchian
+dchannel(len) =>
+    float hh = ta.highest(len)
+    float ll = ta.lowest(len)
+
+    int trend = 0
+    trend := close > hh[1] ? 1 : close < ll[1] ? -1 : nz(trend[1])
+
+    [hh, ll, trend]
+
+dchanneltr(len) =>
+    float hh = ta.highest(len)
+    float ll = ta.lowest(len)
+    int trend = 0
+    trend := close >= hh[1] ? 1 : close <= ll[1] ? -1 : nz(trend[1])
+    trend
+
+[upper, lower, maintrend] = dchannel(dlen)
+
+tt = maintrend == 1 ? 10 : -10
+[u1, l1, t1] = dchannel(dlen - 1)
+
+tt -= (math.sign(dchanneltr(dlen - 1)) != math.sign(maintrend) ? int(math.sign(maintrend)) : 0)
+tt -= (math.sign(dchanneltr(dlen - 2)) != math.sign(maintrend) ? int(math.sign(maintrend)) : 0)
+tt -= (math.sign(dchanneltr(dlen - 3)) != math.sign(maintrend) ? int(math.sign(maintrend)) : 0)
+tt -= (math.sign(dchanneltr(dlen - 4)) != math.sign(maintrend) ? int(math.sign(maintrend)) : 0)
+tt -= (math.sign(dchanneltr(dlen - 5)) != math.sign(maintrend) ? int(math.sign(maintrend)) : 0)
+tt -= (math.sign(dchanneltr(dlen - 6)) != math.sign(maintrend) ? int(math.sign(maintrend)) : 0)
+tt -= (math.sign(dchanneltr(dlen - 7)) != math.sign(maintrend) ? int(math.sign(maintrend)) : 0)
+tt -= (math.sign(dchanneltr(dlen - 8)) != math.sign(maintrend) ? int(math.sign(maintrend)) : 0)
+tt -= (math.sign(dchanneltr(dlen - 9)) != math.sign(maintrend) ? int(math.sign(maintrend)) : 0)
+
+getcolor(trend) =>
+    _ret = trend >= 10.0 ? #00FF00ff : trend >= 9.0 ? #00FF00e5 : trend >= 8.0 ? #00FF00cc : trend >= 7.0 ? #00FF00b2 : trend >= 6.0 ? #00FF0099 : trend >= 5.0 ? #00FF007f : trend >= 4.0 ? #00FF0066 : trend >= 3.0 ? #00FF004c : trend >= 2.0 ? #00FF0033 : trend >= 1.0 ? #00FF0019 : trend == 0.0 ? color.new(color.white, 100) : trend >= -1.0 ? #FF000019 : trend >= -2.0 ? #FF000033 : trend >= -3.0 ? #FF00004c : trend >= -4.0 ? #FF000066 : trend >= -5.0 ? #FF00007f : trend >= -6.0 ? #FF000099 : trend >= -7.0 ? #FF0000b2 : trend >= -8.0 ? #FF0000cc : trend >= -9.0 ? #FF0000e5 : #FF0000ff
+    _ret
+
+tline = maintrend == 1 ? lower : upper
+tcol = maintrend == 1 and nz(maintrend[1]) == 1 or maintrend == -1 and nz(maintrend[1]) == -1 ? getcolor(tt) : na
+
+islower = maintrend == 1 and tt > 2 and (tt < 10 or low == lower)
+ishigh  = maintrend == -1 and tt < -2 and (tt > -10 or high == upper)
+
+///----------------------------------------------------
+// plot display
+
+// display Donchian
+if (not isVisibleDonchian)
+    islower := na 
+    ishigh  := na
+    tline   := na
+
+plot(tline, color=color.new(color.blue, 0), linewidth=lwidth, title='Donchian line')
+plotchar(islower ? lower : na, char='⥣', color=color.new(color.green, 0), location=location.absolute, size=size.small)
+plotchar(ishigh ? upper : na, char='⥥', color=color.new(color.olive, 0), location=location.absolute, size=size.small)
+// dochian end
+
+
+///////////////////////////////////////////////////////////////////////////
+//   NSDT HAMA Candles                                                   //
+///////////////////////////////////////////////////////////////////////////
+// NSDT HAMA Candles
+// chagned values
+// ma line : not display
+// watermark  : not display
+// length open 30
+// length close 25
+////////////////////
+//GRADIENT AREA
+////////////////////
+f_c_gradientAdvDecPro(_source, _center, _steps, _c_bearWeak, _c_bearStrong, _c_bullWeak, _c_bullStrong) =>
+    var float _qtyAdvDec = 0.
+    var float _maxSteps = math.max(1, _steps)
+    bool _xUp = ta.crossover(_source, _center)
+    bool _xDn = ta.crossunder(_source, _center)
+    float _chg = ta.change(_source)
+    bool _up = _chg > 0
+    bool _dn = _chg < 0
+    bool _srcBull = _source > _center
+    bool _srcBear = _source < _center
+    _qtyAdvDec := _srcBull ? _xUp ? 1 : _up ? math.min(_maxSteps, _qtyAdvDec + 1) : _dn ? math.max(1, _qtyAdvDec - 1) : _qtyAdvDec : _srcBear ? _xDn ? 1 : _dn ? math.min(_maxSteps, _qtyAdvDec + 1) : _up ? math.max(1, _qtyAdvDec - 1) : _qtyAdvDec : _qtyAdvDec
+    var color _return = na
+    _return := _srcBull ? color.from_gradient(_qtyAdvDec, 1, _maxSteps, _c_bullWeak, _c_bullStrong) : _srcBear ? color.from_gradient(_qtyAdvDec, 1, _maxSteps, _c_bearWeak, _c_bearStrong) : _return
+    _return
+
+//MA TYPES
+mat(source, length, type) =>
+    type == 'SMA' ? ta.sma(source, length) : type == 'EMA' ? ta.ema(source, length) : type == 'RMA' ? ta.rma(source, length) : type == 'WMA' ? ta.wma(source, length) : type == 'VWMA' ? ta.vwma(source, length) : type == 'HMA' ? ta.hma(source, length) : type == 'TMA' ? ta.sma(ta.sma(source, length), length) : na
+
+//INPUTS
+isNSDT = input.bool(false, title="Visible NSDT HAMA Candles", group='Indicators: NSDT HAMA')
+bull = input(color.rgb(0, 255, 0), title='Bull Color', group='Indicators: NSDT HAMA')
+bear = input(color.rgb(255, 0, 0), title='Bear Color', group='Indicators: NSDT HAMA')
+neutral = input(color.rgb(255, 255, 0, 0), title='Neutral Color', group='Indicators: NSDT HAMA')
+show_ma = true
+ma_type = 'WMA'
+ma_source = close
+ma_length = 55
+UseGradient = input(true, title='Use Gradient Colors', group='Indicators: NSDT HAMA')
+stepn = input(5, title='Max Gradient Steps', group='Indicators: NSDT HAMA')
+ma = mat(ma_source, ma_length, ma_type)
+col = f_c_gradientAdvDecPro(ma, ta.ema(ma, 3), stepn, neutral, bear, neutral, bull)
+////////////////////
+//END GRADIENT AREA
+////////////////////
+
+
+//MA INFO
+WickColor = input.color(color.rgb(80, 80, 80, 100), title='Wick Color', tooltip='Suggest Full Transparency.', group='Indicators: NSDT HAMA')
+OpenLength = input.int(defval=30, minval=1, title='Length Open', inline='Open', group='Indicators: NSDT HAMA')
+OpenType = input.string(defval='EMA', title='Type', options=['EMA', 'SMA', 'WMA'], inline='Open', group='Indicators: NSDT HAMA')
+HighLength = 20
+HighType = 'EMA'
+LowLength = 20
+LowType = 'EMA'
+CloseLength = input.int(defval=25, minval=1, title='Length Close', inline='Close', group='Indicators: NSDT HAMA')
+CloseType = input.string(defval='EMA', title='Type', options=['EMA', 'SMA', 'WMA'], inline='Close', group='Indicators: NSDT HAMA')
+LengthMA = input.int(55, minval=1, title='MA Line Length', inline='MA Info', group='Indicators: NSDT HAMA')
+MAType = input.string(defval='EMA', title='MA Line Type', options=['EMA', 'SMA', 'WMA'], inline='MA Info', group='Indicators: NSDT HAMA')
+MASource = input(hl2, title='NSDT HAMA MA Source', group='Indicators: NSDT HAMA')
+
+TypeOpen = OpenType
+SourceOpen = (open[1] + close[1]) / 2
+LengthOpen = OpenLength
+
+TypeHigh = HighType
+SourceHigh = math.max(high, close)
+LengthHigh = HighLength
+
+TypeLow = LowType
+SourceLow = math.min(low, close)
+LengthLow = LowLength
+
+TypeClose = CloseType
+SourceClose = (open + high + low + close) / 4
+LengthClose = CloseLength
+
+funcCalcMA1(type1, src1, len1) =>
+    return_1 = type1 == 'EMA' ? ta.ema(src1, len1) : type1 == 'SMA' ? ta.sma(src1, len1) : type1 == 'WMA' ? ta.wma(src1, len1) : na
+    return_1
+funcCalcOpen(TypeOpen, SourceOpen, LengthOpen) =>
+    return_2 = TypeOpen == 'EMA' ? ta.ema(SourceOpen, LengthOpen) : TypeOpen == 'SMA' ? ta.sma(SourceOpen, LengthOpen) : TypeOpen == 'WMA' ? ta.wma(SourceOpen, LengthOpen) : na
+    return_2
+funcCalcHigh(TypeHigh, SourceHigh, LengthHigh) =>
+    return_3 = TypeHigh == 'EMA' ? ta.ema(SourceHigh, LengthHigh) : TypeHigh == 'SMA' ? ta.sma(SourceHigh, LengthHigh) : TypeHigh == 'WMA' ? ta.wma(SourceHigh, LengthHigh) : na
+    return_3
+funcCalcLow(TypeLow, SourceLow, LengthLow) =>
+    return_4 = TypeLow == 'EMA' ? ta.ema(SourceLow, LengthLow) : TypeLow == 'SMA' ? ta.sma(SourceLow, LengthLow) : TypeLow == 'WMA' ? ta.wma(SourceLow, LengthLow) : na
+    return_4
+funcCalcClose(TypeClose, SourceClose, LengthClose) =>
+    return_5 = TypeClose == 'EMA' ? ta.ema(SourceClose, LengthClose) : TypeClose == 'SMA' ? ta.sma(SourceClose, LengthClose) : TypeClose == 'WMA' ? ta.wma(SourceClose, LengthClose) : na
+    return_5
+
+MA1 = funcCalcMA1(MAType, MASource, LengthMA)
+
+CandleOpen = funcCalcOpen(TypeOpen, SourceOpen, LengthOpen)
+CandleHigh = funcCalcHigh(TypeHigh, SourceHigh, LengthHigh)
+CandleLow = funcCalcLow(TypeLow, SourceLow, LengthLow)
+CandleClose = funcCalcClose(TypeClose, SourceClose, LengthClose)
+
+//PLOT CANDLES
+if (not isNSDT)
+    CandleOpen := na
+    CandleHigh := na
+    CandleLow := na
+    CandleClose := na
+
+BodyColor = CandleOpen > CandleOpen[1] ? color.green : color.red
+barcolor(UseGradient ? col : BodyColor)
+plotcandle(CandleOpen, CandleHigh, CandleLow, CandleClose, color=UseGradient ? col : BodyColor, title='HAMA Candles', wickcolor=WickColor, bordercolor=na)
+// MA Line not display
+//plot(MA1, title='MA Line', color=UseGradient ? col : BodyColor, style=plot.style_line, linewidth=2)
+
+//ALERTS
+alertcondition(ta.rising(MA1, 2), title='MA Rising', message='MA Rising')
+alertcondition(ta.falling(MA1, 2), title='MA Falling', message='MA Falling')
+alertcondition(ta.crossover(high, MA1), title='High Crossing MA', message='High Crossing MA')
+alertcondition(ta.crossunder(low, MA1), title='Low Crossing MA', message='Low Crossing MA')
+
+//WATERMARK
+// table not display
+//Watermark = table.new(position.bottom_left, 1, 4, border_width=3)
+//table.cell(Watermark, 0, 0, text='North Star Day Trading - NSDT HAMA Candles', text_color=color.new(color.white, 95), text_size=size.huge)
+
+
+///////////////////////////////////////////////////////////////////////////
+//   3x superternd                                                       //
+///////////////////////////////////////////////////////////////////////////
+
+//superternd Periods 1 calculations
+atr = ta.atr(Periods)
+up = src - Multiplier * atr
+up1 = nz(up[1], up)
+up := close[1] > up1 ? math.max(up, up1) : up
+dn = src + Multiplier * atr
+dn1 = nz(dn[1], dn)
+dn := close[1] < dn1 ? math.min(dn, dn1) : dn
+trend = 1
+trend := nz(trend[1], trend)
+trend := trend == -1 and close > dn1 ? 1 : trend == 1 and close < up1 ? -1 : trend
+
+//superternd Periods 2 calculations
+atr_2 = ta.atr(Periods2)
+up_2 = src2 - Multiplier2 * atr_2
+up1_2 = nz(up_2[1], up_2)
+up_2 := close[1] > up1_2 ? math.max(up_2, up1_2) : up_2
+dn_2 = src2 + Multiplier2 * atr_2
+dn1_2 = nz(dn_2[1], dn_2)
+dn_2 := close[1] < dn1_2 ? math.min(dn_2, dn1_2) : dn_2
+trend_2 = 1
+trend_2 := nz(trend_2[1], trend_2)
+trend_2 := trend_2 == -1 and close > dn1_2 ? 1 : trend_2 == 1 and close < up1_2 ? -1 : trend_2
+
+//superternd Periods 3 calculations
+atr_3 = ta.atr(Periods3)
+up_3 = src3 - Multiplier3 * atr_3
+up1_3 = nz(up_3[1], up_3)
+up_3 := close[1] > up1_3 ? math.max(up_3, up1_3) : up_3
+dn_3 = src3 + Multiplier3 * atr_3
+dn1_3 = nz(dn_3[1], dn_3)
+dn_3 := close[1] < dn1_3 ? math.min(dn_3, dn1_3) : dn_3
+trend_3 = 1
+trend_3 := nz(trend_3[1], trend_3)
+trend_3 := trend_3 == -1 and close > dn1_3 ? 1 : trend_3 == 1 and close < up1_3 ? -1 : trend_3
+
+// superternd Periods 1 plotting
+greenSignal_1 = trend == 1 and trend[1] == -1
+redSignal_1 = trend == -1 and trend[1] == 1
+
+if (not isVisibleSuperT)
+    trend := na
+    greenSignal_1 := na
+    redSignal_1 := na
+
+upPlot = plot(trend == 1 ? up : na, title='Up Trend', style=plot.style_linebr, linewidth=2, color=color.new(color.green, 0))
+plotshape(greenSignal_1 ? up : na, title='UpTrend Begins', location=location.absolute, style=shape.circle, size=size.tiny, color=color.new(color.white, 0))
+dnPlot = plot(trend == -1 ? dn : na, title='Down Trend', style=plot.style_linebr, linewidth=2, color=color.new(color.red, 0))
+plotshape(redSignal_1 ? dn : na, title='DownTrend Begins', location=location.absolute, style=shape.circle, size=size.tiny, color=color.new(color.yellow, 0))
+
+// superternd Periods 2 plotting
+greenSignal_2 = trend_2 == 1 and trend_2[1] == -1
+redSignal_2 = trend_2 == -1 and trend_2[1] == 1
+
+if (not isVisibleSuperT)
+    trend_2 := na
+    greenSignal_2 := na
+    redSignal_2 := na
+
+upPlot_2 = plot(trend_2 == 1 ? up_2 : na, title='Up Trend 2', style=plot.style_linebr, linewidth=2, color=color.new(color.green, 0))
+plotshape(greenSignal_2 ? up_2 : na, title='UpTrend Begins 2', location=location.absolute, style=shape.circle, size=size.tiny, color=color.new(color.white, 0))
+dnPlot_2 = plot(trend_2 == -1 ? dn_2 : na, title='Down Trend 2', style=plot.style_linebr, linewidth=2, color=color.new(color.red, 0))
+plotshape(redSignal_2 ? dn_2 : na, title='DownTrend Begins 2', location=location.absolute, style=shape.circle, size=size.tiny, color=color.new(color.yellow, 0))
+
+// superternd Periods 3 plotting
+greenSignal_3 = trend_3 == 1 and trend_3[1] == -1
+redSignal_3 = trend_3 == -1 and trend_3[1] == 1
+
+if (not isVisibleSuperT)
+    trend_3 := na
+    greenSignal_3 := na
+    redSignal_3 := na
+
+upPlot_3 = plot(trend_3 == 1 ? up_3 : na, title='Up Trend 3', style=plot.style_linebr, linewidth=2, color=color.new(color.green, 0))
+plotshape(greenSignal_3 ? up_3 : na, title='UpTrend Begins 3', location=location.absolute, style=shape.circle, size=size.tiny, color=color.new(color.white, 0))
+dnPlot_3 = plot(trend_3 == -1 ? dn_3 : na, title='Down Trend 3', style=plot.style_linebr, linewidth=2, color=color.new(color.red, 0))
+plotshape(redSignal_3 ? dn_3 : na, title='DownTrend Begins 3', location=location.absolute, style=shape.circle, size=size.tiny, color=color.new(color.yellow, 0))
+
+///// Echo Forecast [LuxAlgo]
+//-------------------------------------------------------------------------------
+// This work is licensed under a Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0) https://creativecommons.org/licenses/by-nc-sa/4.0/
+// © LuxAlgo
+
+//version=5
+//Xindicator("Echo Forecast [LuxAlgo]","LuxAlgo - ECHO", overlay = true, max_bars_back = 1000, max_lines_count = 200)
+//-----------------------------------------------------------------------------}
+//Settings
+//-----------------------------------------------------------------------------{
+isVisibleEcho = input.bool(true, title="Visible Echo Forecast", group='Indicators: Echo Forecast')
+length = input.int(50, 'Evaluation Window', minval = 0, maxval = 200, group='Indicators: Echo Forecast')
+fcast  = input.int(50, 'Forecast Window', minval = 1, maxval = 200, group='Indicators: Echo Forecast')
+
+fmode  = input.string('Similarity', 'Forecast Mode', options = ['Similarity','Dissimilarity'], group='Indicators: Echo Forecast')
+cmode  = input.string('Cumulative', 'Forecast Construction', options = ['Cumulative','Mean','Linreg'], group='Indicators: Echo Forecast')
+srcef   = input(close, title="echo Forecast srouce : default (close)", group='Indicators: Echo Forecast')
+
+//Style
+fcastCss = input(color.new(color.white, 0), 'Forecast Style', inline = 'fcast_style', group='Indicators: Echo Forecast')
+fcastStyle = input.string('──', '', options = ['──','- - -','· · ·'], inline = 'fcast_style', group='Indicators: Echo Forecast')
+
+showArea  = input(true,'Show Area', inline = 'areas',  group='Indicators: Echo Forecast Style')
+refArea   = input(color.new(#ff5d00, 80), '', inline = 'areas', group='Indicators: Echo Forecast Style')
+corrArea  = input(color.new(#089981, 80), '', inline = 'areas', group='Indicators: Echo Forecast Style')
+evalArea  = input(color.new(color.gray, 80),'', inline = 'areas', group='Indicators: Echo Forecast Style')
+
+//-----------------------------------------------------------------------------}
+//Populate line arrays
+//-----------------------------------------------------------------------------{
+var lines = array.new_line(0)
+if barstate.isfirst
+    for i = 0 to fcast-1
+        array.push(lines,line.new(na,na,na,na
+          , style = fcastStyle == '- - -' ? line.style_dashed : fcastStyle == '· · ·' ? line.style_dotted : line.style_solid
+          , color = fcastCss))
+
+//-----------------------------------------------------------------------------}
+//Calculations
+//-----------------------------------------------------------------------------{
+var eval_window = box.new(na,na,na,na,na, bgcolor = evalArea)
+var ref_window = box.new(na,na,na,na,na, bgcolor = refArea)
+var corr_window = box.new(na,na,na,na,na, bgcolor = corrArea)
+
+n = bar_index
+d = srcef - srcef[1]
+
+//Get range maximum/minimum
+top = ta.highest(srcef, length + fcast * 2)
+btm = ta.lowest(srcef, length + fcast * 2)
+
+//Set forecast
+if barstate.islast
+    k = 0
+    float val = na
+    A = array.new_float(0)  //Calculation window
+    X = array.new_int(0)    //Linreg independant variable
+
+    //Populate calculation window
+    for i = 0 to fcast*2+length
+        A.push(srcef[i])
+
+        //Populate independant variable array
+        if cmode == 'Linreg'
+            X.push(n[i]) 
+
+    a = A.slice(0, fcast-1) //Reference window
+    
+    //Find window to produce forecast
+    for i = 0 to length-1
+        b = A.slice(fcast + i, fcast * 2 + i - 1)     //Evaluation window
+        r = a.covariance(b) / (a.stdev() * b.stdev()) //Correlation
+
+        //Maximization or minimization problem
+        if fmode == 'Similarity'
+            val := r >= nz(val, r) ? r : val
+        else
+            val := r <= nz(val, r) ? r : val
+    
+        k := val == r ? i : k
+        
+    //Set ECHO
+    prev = srcef
+    current = srcef
+    for i = 0 to fcast-1
+        e = d[fcast + k + (fcast-i-1)]
+
+        //Get forecast point
+        if cmode == 'Mean'
+            current := array.avg(a) + e
+        else if cmode == 'Linreg'
+            a = A.slice(0, fcast)
+            x = X.slice(0, fcast)
+
+            alpha = a.covariance(x) / x.variance()
+            beta = a.avg() - alpha * x.avg()
+            current := alpha * (n + i + 1) + beta + e
+        else
+            current += e
+        
+        if (isVisibleEcho)
+            l = lines.get(i)
+            l.set_xy1(n+i, prev)
+            l.set_xy2(n+i+1, current)
+        
+        prev := current
+
+    //Set areas
+    if showArea    
+        //Evaluation window
+        eval_window.set_lefttop(n-length-fcast*2+1, top)
+        eval_window.set_rightbottom(n-fcast+1, btm)
+        
+        //Reference window
+        ref_window.set_lefttop(n-fcast+1, top)
+        ref_window.set_rightbottom(n, btm)
+
+        //Correlation window
+        corr_window.set_lefttop(n-k-fcast*2+1, top)
+        corr_window.set_rightbottom(n-k-fcast, btm)
+
+// end echo forest
+
+// Ichimoku Cloud Start
+//version=5
+//Xindicator(title="Ichimoku Cloud", shorttitle="Ichimoku", overlay=true)
+
+isVisibleIchimoku = input.bool(true, title="Visible Ichimoku Cloud BaseLine", group='Indicators: Ichimoku Cloud')
+basePeriods = input.int(26, minval=1, title="Ichimoku Cloud Base Line Length", group='Indicators: Ichimoku Cloud')
+ICwidth = input.int(defval=3, title='Ichimoku Cloud Line Width', minval=1, maxval=4, group='Indicators: Ichimoku Cloud')
+
+//Style
+ICCss = input(color.new(color.yellow, 0), 'Ichimoku Cloud Base Line Color', group='Indicators: Ichimoku Cloud')
+
+// function 
+donchian(len) => math.avg(ta.lowest(len), ta.highest(len))
+
+baseLine = donchian(basePeriods)
+if (not isVisibleIchimoku)
+    baseLine := na
+
+
+plot(baseLine, color = ICCss, linewidth=ICwidth, title="Ichimoku Cloud Base Line")
+// Ichimoku Cloud END
+
+// SSL Hybrid
+//@version=5
+//By Mihkel00
+// This script is designed for the NNFX Method, so it is recommended for Daily charts only. 
+// Tried to implement a few VP NNFX Rules
+// This script has a SSL / Baseline (you can choose between the SSL or MA), a secondary SSL for continiuation trades and a third SSL for exit trades.
+// Alerts added for Baseline entries, SSL2 continuations, Exits.
+// Baseline has a Keltner Channel setting for "in zone" Gray Candles
+// Added "Candle Size > 1 ATR" Diamonds from my old script with the criteria of being within Baseline ATR range.
+// Credits
+// Strategy causecelebre https://www.tradingview.com/u/causecelebre/
+// SSL Channel ErwinBeckers https://www.tradingview.com/u/ErwinBeckers/
+// Moving Averages jiehonglim https://www.tradingview.com/u/jiehonglim/
+// Moving Averages  everget https://www.tradingview.com/u/everget/
+// "Many Moving Averages" script  Fractured https://www.tradingview.com/u/Fractured/
+
+//Xindicator('SSL Hybrid', overlay=true)
+isVisibleSSL = input.bool(true, title="Visible SSL Hybrid", group='Indicators: SSL Hybrid')
+show_Baseline = input(title='Show SSL Hybrid Baseline', defval=true, group='Indicators: SSL Hybrid')
+show_SSL1 = input(title='Show SSL Hybrid SSL1', defval=false, group='Indicators: SSL Hybrid')
+//show_atr = input(title='Show ATR bands', defval=true)
+//ATR
+atrlen = input(14, 'SSL Hybrid ATR Period', group='Indicators: SSL Hybrid')
+mult = input.float(1, 'SSL Hybrid ATR Multi', step=0.1, group='Indicators: SSL Hybrid')
+smoothing = input.string(title='SSL HybridATR Smoothing', defval='WMA', options=['RMA', 'SMA', 'EMA', 'WMA'], group='Indicators: SSL Hybrid')
+
+ma_function(source, atrlen) =>
+    if smoothing == 'RMA'
+        ta.rma(source, atrlen)
+    else
+        if smoothing == 'SMA'
+            ta.sma(source, atrlen)
+        else
+            if smoothing == 'EMA'
+                ta.ema(source, atrlen)
+            else
+                ta.wma(source, atrlen)
+
+atr_slen = ma_function(ta.tr(true), atrlen)
+////ATR Up/Low Bands
+upper_band = atr_slen * mult + close
+lower_band = close - atr_slen * mult
+
+////BASELINE / SSL1 / SSL2 / EXIT MOVING AVERAGE VALUES
+maType = input.string(title='SSL1 / Baseline Type', defval='HMA', options=['SMA', 'EMA', 'DEMA', 'TEMA', 'LSMA', 'WMA', 'MF', 'VAMA', 'TMA', 'HMA', 'JMA', 'Kijun v2', 'EDSMA', 'McGinley'])
+len = input(title='SSL1 / Baseline Length', defval=60, group='Indicators: SSL Hybrid')
+
+SSL2Type = input.string(title='SSL2 / Continuation Type', defval='JMA', options=['SMA', 'EMA', 'DEMA', 'TEMA', 'WMA', 'MF', 'VAMA', 'TMA', 'HMA', 'JMA', 'McGinley'], group='Indicators: SSL Hybrid')
+len2 = input(title='SSL 2 Length', defval=5, group='Indicators: SSL Hybrid')
+//
+SSL3Type = input.string(title='EXIT Type', defval='HMA', options=['DEMA', 'TEMA', 'LSMA', 'VAMA', 'TMA', 'HMA', 'JMA', 'Kijun v2', 'McGinley', 'MF'], group='Indicators: SSL Hybrid')
+len3 = input(title='EXIT Length', defval=15, group='Indicators: SSL Hybrid')
+srcssl = input(title='SSL Hybrid Source', defval=close, group='Indicators: SSL Hybrid')
+
+//
+tema(src, len) =>
+    ema1 = ta.ema(src, len)
+    ema2 = ta.ema(ema1, len)
+    ema3 = ta.ema(ema2, len)
+    3 * ema1 - 3 * ema2 + ema3
+kidiv = input.int(defval=1, maxval=4, title='Kijun MOD Divider', group='Indicators: SSL Hybrid')
+
+jurik_phase = input(title='* Jurik (JMA) Only - Phase', defval=3)
+jurik_power = input(title='* Jurik (JMA) Only - Power', defval=1)
+volatility_lookback = input(10, title='* Volatility Adjusted (VAMA) Only - Volatility lookback length', group='Indicators: SSL Hybrid')
+//MF
+beta = input.float(0.8, minval=0, maxval=1, step=0.1, title='Modular Filter, General Filter Only - Beta', group='Indicators: SSL Hybrid')
+feedback = input(false, title='Modular Filter Only - Feedback')
+z = input.float(0.5, title='Modular Filter Only - Feedback Weighting', step=0.1, minval=0, maxval=1, group='Indicators: SSL Hybrid')
+//EDSMA
+ssfLength = input.int(title='EDSMA - Super Smoother Filter Length', minval=1, defval=20, group='Indicators: SSL Hybrid')
+ssfPoles = input.int(title='EDSMA - Super Smoother Filter Poles', defval=2, options=[2, 3], group='Indicators: SSL Hybrid')
+
+//----
+
+//EDSMA
+get2PoleSSF(src, length) =>
+    PI = 2 * math.asin(1)
+    arg = math.sqrt(2) * PI / length
+    a1 = math.exp(-arg)
+    b1 = 2 * a1 * math.cos(arg)
+    c2 = b1
+    c3 = -math.pow(a1, 2)
+    c1 = 1 - c2 - c3
+
+    ssf = 0.0
+    ssf := c1 * src + c2 * nz(ssf[1]) + c3 * nz(ssf[2])
+    ssf
+
+get3PoleSSF(src, length) =>
+    PI = 2 * math.asin(1)
+
+    arg = PI / length
+    a1 = math.exp(-arg)
+    b1 = 2 * a1 * math.cos(1.738 * arg)
+    c1 = math.pow(a1, 2)
+
+    coef2 = b1 + c1
+    coef3 = -(c1 + b1 * c1)
+    coef4 = math.pow(c1, 2)
+    coef1 = 1 - coef2 - coef3 - coef4
+
+    ssf = 0.0
+    ssf := coef1 * src + coef2 * nz(ssf[1]) + coef3 * nz(ssf[2]) + coef4 * nz(ssf[3])
+    ssf
+
+ma(type, src, len) =>
+    float result = 0
+    if type == 'TMA'
+        result := ta.sma(ta.sma(src, math.ceil(len / 2)), math.floor(len / 2) + 1)
+        result
+    if type == 'MF'
+        ts = 0.
+        b = 0.
+        c = 0.
+        os = 0.
+        //----
+        alpha = 2 / (len + 1)
+        a = feedback ? z * src + (1 - z) * nz(ts[1], src) : src
+        //----
+        b := a > alpha * a + (1 - alpha) * nz(b[1], a) ? a : alpha * a + (1 - alpha) * nz(b[1], a)
+        c := a < alpha * a + (1 - alpha) * nz(c[1], a) ? a : alpha * a + (1 - alpha) * nz(c[1], a)
+        os := a == b ? 1 : a == c ? 0 : os[1]
+        //----
+        upper = beta * b + (1 - beta) * c
+        lower = beta * c + (1 - beta) * b
+        ts := os * upper + (1 - os) * lower
+        result := ts
+        result
+    if type == 'LSMA'
+        result := ta.linreg(src, len, 0)
+        result
+    if type == 'SMA'  // Simple
+        result := ta.sma(src, len)
+        result
+    if type == 'EMA'  // Exponential
+        result := ta.ema(src, len)
+        result
+    if type == 'DEMA'  // Double Exponential
+        e = ta.ema(src, len)
+        result := 2 * e - ta.ema(e, len)
+        result
+    if type == 'TEMA'  // Triple Exponential
+        e = ta.ema(src, len)
+        result := 3 * (e - ta.ema(e, len)) + ta.ema(ta.ema(e, len), len)
+        result
+    if type == 'WMA'  // Weighted
+        result := ta.wma(src, len)
+        result
+    if type == 'VAMA'  // Volatility Adjusted
+        /// Copyright © 2019 to present, Joris Duyck (JD)
+        mid = ta.ema(src, len)
+        dev = src - mid
+        vol_up = ta.highest(dev, volatility_lookback)
+        vol_down = ta.lowest(dev, volatility_lookback)
+        result := mid + math.avg(vol_up, vol_down)
+        result
+    if type == 'HMA'  // Hull
+        result := ta.wma(2 * ta.wma(src, len / 2) - ta.wma(src, len), math.round(math.sqrt(len)))
+        result
+    if type == 'JMA'  // Jurik
+        /// Copyright © 2018 Alex Orekhov (everget)
+        /// Copyright © 2017 Jurik Research and Consulting.
+        phaseRatio = jurik_phase < -100 ? 0.5 : jurik_phase > 100 ? 2.5 : jurik_phase / 100 + 1.5
+        beta = 0.45 * (len - 1) / (0.45 * (len - 1) + 2)
+        alpha = math.pow(beta, jurik_power)
+        jma = 0.0
+        e0 = 0.0
+        e0 := (1 - alpha) * src + alpha * nz(e0[1])
+        e1 = 0.0
+        e1 := (src - e0) * (1 - beta) + beta * nz(e1[1])
+        e2 = 0.0
+        e2 := (e0 + phaseRatio * e1 - nz(jma[1])) * math.pow(1 - alpha, 2) + math.pow(alpha, 2) * nz(e2[1])
+        jma := e2 + nz(jma[1])
+        result := jma
+        result
+    if type == 'Kijun v2'
+        kijun = math.avg(ta.lowest(len), ta.highest(len))  //, (open + close)/2)
+        conversionLine = math.avg(ta.lowest(len / kidiv), ta.highest(len / kidiv))
+        delta = (kijun + conversionLine) / 2
+        result := delta
+        result
+    if type == 'McGinley'
+        mg = 0.0
+        mg := na(mg[1]) ? ta.ema(src, len) : mg[1] + (src - mg[1]) / (len * math.pow(src / mg[1], 4))
+        result := mg
+        result
+    if type == 'EDSMA'
+
+        zeros = src - nz(src[2])
+        avgZeros = (zeros + zeros[1]) / 2
+
+        // Ehlers Super Smoother Filter 
+        ssf = ssfPoles == 2 ? get2PoleSSF(avgZeros, ssfLength) : get3PoleSSF(avgZeros, ssfLength)
+
+        // Rescale filter in terms of Standard Deviations
+        stdev = ta.stdev(ssf, len)
+        scaledFilter = stdev != 0 ? ssf / stdev : 0
+
+        alpha = 5 * math.abs(scaledFilter) / len
+
+        edsma = 0.0
+        edsma := alpha * src + (1 - alpha) * nz(edsma[1])
+        result := edsma
+        result
+    result
+
+///SSL 1 and SSL2
+emaHigh = ma(maType, high, len)
+emaLow = ma(maType, low, len)
+
+maHigh = ma(SSL2Type, high, len2)
+maLow = ma(SSL2Type, low, len2)
+
+///EXIT
+ExitHigh = ma(SSL3Type, high, len3)
+ExitLow = ma(SSL3Type, low, len3)
+
+///Keltner Baseline Channel
+BBMC = ma(maType, close, len)
+useTrueRange = input(true)
+multy = input.float(0.2, step=0.05, title='Base Channel Multiplier')
+Keltma = ma(maType, srcssl, len)
+range_1 = useTrueRange ? ta.tr : high - low
+rangema = ta.ema(range_1, len)
+upperk = Keltma + rangema * multy
+lowerk = Keltma - rangema * multy
+
+//Baseline Violation Candle
+//open_pos = open * 1
+//close_pos = close * 1
+//difference = math.abs(close_pos - open_pos)
+//atr_violation = difference > atr_slen
+//InRange = upper_band > BBMC and lower_band < BBMC
+//candlesize_violation = atr_violation and InRange
+//plotshape(candlesize_violation, color=color.new(color.white, 0), size=size.tiny, style=shape.diamond, location=location.top, title='Candle Size > 1xATR')
+
+
+//SSL1 VALUES
+Hlv = int(na)
+Hlv := close > emaHigh ? 1 : close < emaLow ? -1 : Hlv[1]
+sslDown = Hlv < 0 ? emaHigh : emaLow
+
+//SSL2 VALUES
+Hlv2 = int(na)
+Hlv2 := close > maHigh ? 1 : close < maLow ? -1 : Hlv2[1]
+sslDown2 = Hlv2 < 0 ? maHigh : maLow
+
+//EXIT VALUES
+Hlv3 = int(na)
+Hlv3 := close > ExitHigh ? 1 : close < ExitLow ? -1 : Hlv3[1]
+sslExit = Hlv3 < 0 ? ExitHigh : ExitLow
+base_cross_Long = ta.crossover(close, sslExit)
+base_cross_Short = ta.crossover(sslExit, close)
+codiff = base_cross_Long ? 1 : base_cross_Short ? -1 : na
+
+//COLORS
+show_color_bar = input(title='Color Bars', defval=true)
+color_bar = close > upperk ? #00c3ff : close < lowerk ? #ff0062 : color.gray
+color_ssl1 = close > sslDown ? #00c3ff : close < sslDown ? #ff0062 : na
+
+//PLOTS
+plotarrow(codiff, colorup=color.new(#00c3ff, 20), colordown=color.new(#ff0062, 20), title='Exit Arrows', maxheight=20, offset=0)
+
+if (not isVisibleSSL)
+    BBMC := na, sslDown := na, upperk := na, lowerk :=na
+    sslDown2 :=na, sslExit := na
+
+p1 = plot(show_Baseline ? BBMC : na, color=color_bar, linewidth=4, title='MA Baseline', transp=0)
+
+
+DownPlot = plot(show_SSL1 ? sslDown : na, title='SSL1', linewidth=3, color=color_ssl1, transp=10)
+barcolor(show_color_bar ? color_bar : na)
+up_channel = plot(show_Baseline ? upperk : na, color=color_bar, title='Baseline Upper Channel')
+low_channel = plot(show_Baseline ? lowerk : na, color=color_bar, title='Basiline Lower Channel')
+//fill(up_channel, low_channel, color=color_bar, transp=90)
+
+////SSL2 Continiuation from ATR
+
+//u = plot(show_atr ? upper_band : na, "+ATR", color=color.white, transp=80)
+//l = plot(show_atr ? lower_band : na, "-ATR", color=color.white, transp=80)
+
+//ALERTS
+alertcondition(ta.crossover(close, sslDown), title='SSL Cross Alert', message='SSL1 has crossed.')
+alertcondition(ta.crossover(close, sslDown2), title='SSL2 Cross Alert', message='SSL2 has crossed.')
+//alertcondition(sell_atr, title='Sell Continuation', message='Sell Continuation.')
+//alertcondition(buy_atr, title='Buy Continuation', message='Buy Continuation.')
+alertcondition(ta.crossover(close, sslExit), title='Exit Sell', message='Exit Sell Alert.')
+alertcondition(ta.crossover(sslExit, close), title='Exit Buy', message='Exit Buy Alert.')
+alertcondition(ta.crossover(close, upperk), title='Baseline Buy Entry', message='Base Buy Alert.')
+alertcondition(ta.crossover(lowerk, close), title='Baseline Sell Entry', message='Base Sell Alert.')
+
+// SSL Hybrid END
+//-----------------------------------------------------------------------------}
+
+// Display { --------------------------------------------------------------------
+// Support and Resistance Levels with Breaks
+isLineR= input.string('-', title="Visible Support and Resistance", group='Indicators: Support and Resistance')
+isVisibleSupRest= input.bool(true, title="Visible Support and Resistance", group='Indicators: Support and Resistance')
+
+leftBars = input(15, title='Support and Resistance : Left Bars ', group='Indicators: Support and Resistance')
+rightBars = input(15, title='Support and Resistance : Right Bars', group='Indicators: Support and Resistance')
+volumeThresh = input(20, title='Support and Resistance : Volume Threshold', group='Indicators: Support and Resistance')
+//
+highUsePivot = fixnan(ta.pivothigh(leftBars, rightBars)[1])
+lowUsePivot = fixnan(ta.pivotlow(leftBars, rightBars)[1])
+r1 = plot(isVisibleSupRest ? highUsePivot : na, color=ta.change(highUsePivot) ? na : #FF0000, linewidth=2, offset=-(rightBars + 1), style=plot.style_circles, title='Resistance')
+s1 = plot(isVisibleSupRest ? lowUsePivot : na, color=ta.change(lowUsePivot) ? na : #233dee, linewidth=2, offset=-(rightBars + 1), style=plot.style_circles, title='Support')
+//--------------------------------------------------------------------------------}
+
+//indicator all end
