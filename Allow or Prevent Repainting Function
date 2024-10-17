@@ -1,0 +1,3 @@
+// Allow or Prevent Repainting Function
+f_security(_symbol, _res, _src, _repaint) =>
+    request.security(_symbol, _res, _src[_repaint ? 0 : barstate.isrealtime ? 1 : 0])[_repaint ? 0 : barstate.isrealtime ? 0 : 1]
